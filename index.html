@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FFT Audio Analyzer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+```
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+    }
+
+    .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        padding: 40px;
+    }
+
+    h1 {
+        color: #333;
+        margin-bottom: 30px;
+        text-align: center;
+        font-size: 2em;
+    }
+
+    .upload-section {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .upload-box {
+        background: #f8f9fa;
+        border: 2px dashed #667eea;
+        border-radius: 12px;
+        padding: 30px;
+        text-align: center;
+        transition: all 0.3s;
+    }
+
+    .upload-box:hover {
+        border-color: #764ba2;
+        background: #f0f1ff;
+    }
+
+    .file-input-wrapper {
+        position: relative;
+        display: inline-block;
+    }
+
+    input[type="file"] {
+        display: none;
+    }
+
+    .upload-button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 12px 30px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-block;
+        transition: transform 0.2s;
+    }
+
+    .upload-button:hover {
+        transform: translateY(-2px);
+    }
+
+    .upload-button:active {
+        transform: scale(0.98);
+    }
+
+    .controls {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    button {
+        background: #667eea;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    button:hover:not(:disabled) {
+        background: #5568d3;
+        transform: translateY(-1px);
+    }
+
+    button:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+    }
+
+    .seek-container {
+        flex: 1;
+        min-width: 300px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .seek-bar {
+        flex: 1;
+        height: 8px;
+        -webkit-appearance: none;
+        appearance: none;
+        background: #ddd;
+        border-radius: 4px;
+        outline: none;
+        cursor: pointer;
+    }
+
+    .seek-bar::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        background: #667eea;
+        border-radius: 50%;
+        cursor: pointer;
+    }
+
+    .seek-bar::-moz-range-thumb {
+        width: 18px;
+        height: 18px;
+        background: #667eea;
+        border-radius: 50%;
+        cursor: pointer;
+        border: none;
+    }
+
+    .canvas-container {
+        background: #1a1a2e;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    canvas {
+        width: 100%;
+        height: auto;
+        border-radius: 8px;
+    }
+
+    .info {
+        background: #e3f2fd;
+        border-left: 4px solid #2196f3;
+        padding: 15px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+    }
+
+    .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    .stat-card {
+        background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+        padding: 15px;
+        border-radius: 8px;
+        border: 1px solid #667eea30;
+    }
+
+    .stat-label {
+        font-size: 12px;
+        color: #666;
+        margin-bottom: 5px;
+    }
+
+    .stat-value {
+        font-size: 20px;
+        font-weight: 700;
+        color: #333;
+    }
+
+    .download-section {
+        text-align: center;
+        margin-top: 30px;
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .download-btn {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        font-size: 16px;
+        padding: 15px 40px;
+    }
+
+    .download-btn:hover:not(:disabled) {
+        background: linear-gradient(135deg, #0e8577 0%, #2dd968 100%);
+    }
+
+    .file-name {
+        color: #667eea;
+        font-weight: 600;
+        margin-top: 10px;
+        font-size: 13px;
+    }
+
+    .analysis-type {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 10px;
+        color: #333;
+    }
+
+    @media (max-width: 768px) {
+        .upload-section {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+```
+
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 FFT Audio Analyzer</h1>
+
+```
+    <div class="info">
+        <strong>📌 How to use:</strong> Select audio/video files (mp3, wav, mp4, etc.) for File 1 and optionally File 2 to compare their frequency spectrums.
+    </div>
+
+    <div class="upload-section">
+        <div class="upload-box">
+            <div class="analysis-type">File 1</div>
+            <div class="file-input-wrapper">
+                <div class="upload-button">📁 Select File 1</div>
+                <input type="file" id="fileInput1" accept="audio/*,video/*,.mp3,.wav,.mp4,.avi,.mov,.webm">
+            </div>
+            <div class="file-name" id="fileName1"></div>
+        </div>
+
+        <div class="upload-box">
+            <div class="analysis-type">File 2 (Optional)</div>
+            <div class="file-input-wrapper">
+                <div class="upload-button">📁 Select File 2</div>
+                <input type="file" id="fileInput2" accept="audio/*,video/*,.mp3,.wav,.mp4,.avi,.mov,.webm">
+            </div>
+            <div class="file-name" id="fileName2"></div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button id="playBtn" disabled>▶️ Play</button>
+        <button id="pauseBtn" disabled>⏸️ Pause</button>
+        <button id="stopBtn" disabled>⏹️ Stop</button>
+        <div class="seek-container">
+            <span id="currentTime">0:00</span>
+            <input type="range" class="seek-bar" id="seekBar" min="0" max="100" value="0" disabled>
+            <span id="duration">0:00</span>
+        </div>
+    </div>
+
+    <div class="stats">
+        <div class="stat-card">
+            <div class="stat-label">Peak Frequency (File 1)</div>
+            <div class="stat-value" id="peakFreq1">- Hz</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Peak Frequency (File 2)</div>
+            <div class="stat-value" id="peakFreq2">- Hz</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Average Amplitude (File 1)</div>
+            <div class="stat-value" id="avgAmp1">- dB</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Average Amplitude (File 2)</div>
+            <div class="stat-value" id="avgAmp2">- dB</div>
+        </div>
+    </div>
+
+    <div class="canvas-container">
+        <canvas id="fftCanvas" width="1200" height="500"></canvas>
+    </div>
+
+    <div class="canvas-container">
+        <canvas id="avgCanvas" width="1200" height="500"></canvas>
+    </div>
+
+    <div class="canvas-container">
+        <canvas id="peakCanvas" width="1200" height="500"></canvas>
+    </div>
+
+    <div class="download-section">
+        <button class="download-btn" id="downloadAvgBtn" disabled>💾 Download Average Spectrum</button>
+        <button class="download-btn" id="downloadPeakBtn" disabled>💾 Download Peak Spectrum</button>
+    </div>
+</div>
+
+<script>
+    let audioContext;
+    let analyser1, analyser2;
+    let dataArray1, dataArray2;
+    let bufferLength;
+    let audioElement1, audioElement2;
+    let source1, source2;
+    let animationId;
+    let averageSpectrum1 = null;
+    let averageSpectrum2 = null;
+    let peakSpectrum1 = null;
+    let peakSpectrum2 = null;
+    let spectrumCount = 0;
+    let isPlaying = false;
+    let isSeeking = false;
+
+    const fileInput1 = document.getElementById('fileInput1');
+    const fileInput2 = document.getElementById('fileInput2');
+    const uploadButtons = document.querySelectorAll('.upload-button');
+    const playBtn = document.getElementById('playBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const downloadAvgBtn = document.getElementById('downloadAvgBtn');
+    const downloadPeakBtn = document.getElementById('downloadPeakBtn');
+    const seekBar = document.getElementById('seekBar');
+    const currentTime = document.getElementById('currentTime');
+    const duration = document.getElementById('duration');
+    const fftCanvas = document.getElementById('fftCanvas');
+    const avgCanvas = document.getElementById('avgCanvas');
+    const peakCanvas = document.getElementById('peakCanvas');
+    const fftCtx = fftCanvas.getContext('2d');
+    const avgCtx = avgCanvas.getContext('2d');
+    const peakCtx = peakCanvas.getContext('2d');
+    const fileName1 = document.getElementById('fileName1');
+    const fileName2 = document.getElementById('fileName2');
+    const peakFreq1 = document.getElementById('peakFreq1');
+    const peakFreq2 = document.getElementById('peakFreq2');
+    const avgAmp1 = document.getElementById('avgAmp1');
+    const avgAmp2 = document.getElementById('avgAmp2');
+
+    uploadButtons[0].addEventListener('click', () => fileInput1.click());
+    uploadButtons[1].addEventListener('click', () => fileInput2.click());
+
+    fileInput1.addEventListener('change', (e) => handleFileSelect(e, 1));
+    fileInput2.addEventListener('change', (e) => handleFileSelect(e, 2));
+    playBtn.addEventListener('click', play);
+    pauseBtn.addEventListener('click', pause);
+    stopBtn.addEventListener('click', stop);
+    downloadAvgBtn.addEventListener('click', () => downloadImage(avgCanvas, 'average_spectrum.png'));
+    downloadPeakBtn.addEventListener('click', () => downloadImage(peakCanvas, 'peak_spectrum.png'));
+    seekBar.addEventListener('input', handleSeek);
+    seekBar.addEventListener('change', handleSeekEnd);
+
+    function handleFileSelect(e, fileNum) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (fileNum === 1) {
+            fileName1.textContent = `Selected: ${file.name}`;
+        } else {
+            fileName2.textContent = `Selected: ${file.name}`;
+        }
+
+        if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        if (fileNum === 1) {
+            if (audioElement1) {
+                audioElement1.pause();
+                audioElement1.src = '';
+            }
+
+            analyser1 = audioContext.createAnalyser();
+            analyser1.fftSize = 2048;
+            bufferLength = analyser1.frequencyBinCount;
+            dataArray1 = new Uint8Array(bufferLength);
+            averageSpectrum1 = new Float32Array(bufferLength);
+            peakSpectrum1 = new Float32Array(bufferLength);
+
+            audioElement1 = new Audio();
+            audioElement1.crossOrigin = "anonymous";
+            audioElement1.src = URL.createObjectURL(file);
+
+            source1 = audioContext.createMediaElementSource(audioElement1);
+            source1.connect(analyser1);
+            analyser1.connect(audioContext.destination);
+
+            audioElement1.addEventListener('loadedmetadata', () => {
+                playBtn.disabled = false;
+                pauseBtn.disabled = false;
+                stopBtn.disabled = false;
+                seekBar.disabled = false;
+                seekBar.max = audioElement1.duration;
+                duration.textContent = formatTime(audioElement1.duration);
+            });
+
+            audioElement1.addEventListener('timeupdate', updateTimeDisplay);
+            audioElement1.addEventListener('ended', handleEnded);
+        } else {
+            if (audioElement2) {
+                audioElement2.pause();
+                audioElement2.src = '';
+            }
+
+            analyser2 = audioContext.createAnalyser();
+            analyser2.fftSize = 2048;
+            dataArray2 = new Uint8Array(bufferLength || analyser2.frequencyBinCount);
+            averageSpectrum2 = new Float32Array(bufferLength || analyser2.frequencyBinCount);
+            peakSpectrum2 = new Float32Array(bufferLength || analyser2.frequencyBinCount);
+
+            audioElement2 = new Audio();
+            audioElement2.crossOrigin = "anonymous";
+            audioElement2.src = URL.createObjectURL(file);
+            audioElement2.muted = true;
+
+            source2 = audioContext.createMediaElementSource(audioElement2);
+            source2.connect(analyser2);
+            analyser2.connect(audioContext.destination);
+        }
+
+        spectrumCount = 0;
+    }
+
+    function play() {
+        if (audioElement1) {
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            audioElement1.play();
+            if (audioElement2) {
+                audioElement2.currentTime = audioElement1.currentTime;
+                audioElement2.play();
+            }
+            isPlaying = true;
+            visualize();
+        }
+    }
+
+    function pause() {
+        if (audioElement1) {
+            audioElement1.pause();
+            if (audioElement2) audioElement2.pause();
+            isPlaying = false;
+            cancelAnimationFrame(animationId);
+        }
+    }
+
+    function stop() {
+        if (audioElement1) {
+            audioElement1.pause();
+            audioElement1.currentTime = 0;
+            if (audioElement2) {
+                audioElement2.pause();
+                audioElement2.currentTime = 0;
+            }
+            isPlaying = false;
+            cancelAnimationFrame(animationId);
+            updateTimeDisplay();
+        }
+    }
+
+    function handleSeek(e) {
+        isSeeking = true;
+        if (audioElement1) {
+            audioElement1.currentTime = e.target.value;
+            if (audioElement2) {
+                audioElement2.currentTime = e.target.value;
+            }
+        }
+    }
+
+    function handleSeekEnd() {
+        isSeeking = false;
+    }
+
+    function handleEnded() {
+        stop();
+        drawAverageSpectrum();
+        drawPeakSpectrum();
+        downloadAvgBtn.disabled = false;
+        downloadPeakBtn.disabled = false;
+    }
+
+    function visualize() {
+        if (!isPlaying) return;
+        animationId = requestAnimationFrame(visualize);
+
+        if (analyser1) {
+            analyser1.getByteFrequencyData(dataArray1);
+            
+            for (let i = 0; i < bufferLength; i++) {
+                averageSpectrum1[i] += dataArray1[i];
+                if (dataArray1[i] > peakSpectrum1[i]) {
+                    peakSpectrum1[i] = dataArray1[i];
+                }
+            }
+        }
+
+        if (analyser2) {
+            analyser2.getByteFrequencyData(dataArray2);
+            
+            for (let i = 0; i < dataArray2.length; i++) {
+                averageSpectrum2[i] += dataArray2[i];
+                if (dataArray2[i] > peakSpectrum2[i]) {
+                    peakSpectrum2[i] = dataArray2[i];
+                }
+            }
+        }
+
+        spectrumCount++;
+        drawFFT();
+        updateStats();
+    }
+
+    function drawFFT() {
+        const width = fftCanvas.width;
+        const height = fftCanvas.height;
+        const nyquist = audioContext.sampleRate / 2;
+
+        fftCtx.fillStyle = 'rgb(20, 20, 40)';
+        fftCtx.fillRect(0, 0, width, height);
+
+        drawGrid(fftCtx, width, height, nyquist);
+
+        if (dataArray1) {
+            drawSpectrum(fftCtx, dataArray1, width, height, 'rgba(34, 197, 94, 0.7)', 'rgb(34, 197, 94)');
+        }
+
+        if (dataArray2) {
+            drawSpectrum(fftCtx, dataArray2, width, height, 'rgba(59, 130, 246, 0.5)', 'rgb(59, 130, 246)');
+        }
+
+        fftCtx.fillStyle = 'white';
+        fftCtx.font = 'bold 16px sans-serif';
+        fftCtx.fillText('Real-time FFT Spectrum', 10, 25);
+        
+        if (dataArray1 && dataArray2) {
+            fftCtx.fillStyle = 'rgb(34, 197, 94)';
+            fftCtx.fillText('■ File 1', width - 220, 25);
+            fftCtx.fillStyle = 'rgb(59, 130, 246)';
+            fftCtx.fillText('■ File 2', width - 110, 25);
+        }
+    }
+
+    function drawAverageSpectrum() {
+        if (spectrumCount === 0) return;
+
+        const width = avgCanvas.width;
+        const height = avgCanvas.height;
+        const nyquist = audioContext.sampleRate / 2;
+
+        avgCtx.fillStyle = 'rgb(20, 20, 40)';
+        avgCtx.fillRect(0, 0, width, height);
+
+        drawGrid(avgCtx, width, height, nyquist);
+
+        if (averageSpectrum1) {
+            const avgData1 = new Float32Array(bufferLength);
+            for (let i = 0; i < bufferLength; i++) {
+                avgData1[i] = averageSpectrum1[i] / spectrumCount;
+            }
+            drawSpectrum(avgCtx, avgData1, width, height, 'rgba(34, 197, 94, 0.7)', 'rgb(34, 197, 94)');
+        }
+
+        if (averageSpectrum2) {
+            const avgData2 = new Float32Array(averageSpectrum2.length);
+            for (let i = 0; i < averageSpectrum2.length; i++) {
+                avgData2[i] = averageSpectrum2[i] / spectrumCount;
+            }
+            drawSpectrum(avgCtx, avgData2, width, height, 'rgba(59, 130, 246, 0.5)', 'rgb(59, 130, 246)');
+        }
+
+        avgCtx.fillStyle = 'white';
+        avgCtx.font = 'bold 16px sans-serif';
+        avgCtx.fillText('Average Power Spectrum', 10, 25);
+
+        if (averageSpectrum1 && averageSpectrum2) {
+            avgCtx.fillStyle = 'rgb(34, 197, 94)';
+            avgCtx.fillText('■ File 1', width - 220, 25);
+            avgCtx.fillStyle = 'rgb(59, 130, 246)';
+            avgCtx.fillText('■ File 2', width - 110, 25);
+        }
+    }
+
+    function drawPeakSpectrum() {
+        if (spectrumCount === 0) return;
+
+        const width = peakCanvas.width;
+        const height = peakCanvas.height;
+        const nyquist = audioContext.sampleRate / 2;
+
+        peakCtx.fillStyle = 'rgb(20, 20, 40)';
+        peakCtx.fillRect(0, 0, width, height);
+
+        drawGrid(peakCtx, width, height, nyquist);
+
+        if (peakSpectrum1) {
+            drawSpectrum(peakCtx, peakSpectrum1, width, height, 'rgba(34, 197, 94, 0.7)', 'rgb(34, 197, 94)');
+        }
+
+        if (peakSpectrum2) {
+            drawSpectrum(peakCtx, peakSpectrum2, width, height, 'rgba(59, 130, 246, 0.5)', 'rgb(59, 130, 246)');
+        }
+
+        peakCtx.fillStyle = 'white';
+        peakCtx.font = 'bold 16px sans-serif';
+        peakCtx.fillText('Peak Hold Spectrum', 10, 25);
+
+        if (peakSpectrum1 && peakSpectrum2) {
+            peakCtx.fillStyle = 'rgb(34, 197, 94)';
+            peakCtx.fillText('■ File 1', width - 220, 25);
+            peakCtx.fillStyle = 'rgb(59, 130, 246)';
+            peakCtx.fillText('■ File 2', width - 110, 25);
+        }
+    }
+
+    function drawGrid(ctx, width, height, nyquist) {
+        ctx.strokeStyle = 'rgba(100, 100, 150, 0.3)';
+        ctx.lineWidth = 1;
+        
+        // Horizontal grid lines with dB labels
+        for (let i = 0; i <= 10; i++) {
+            const y = (height / 10) * i;
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(width, y);
+            ctx.stroke();
+            
+            const db = -60 + (6 * (10 - i));
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+            ctx.font = '11px sans-serif';
+            ctx.fillText(`${db} dB`, 5, y - 3);
+        }
+
+        // Vertical grid lines with frequency labels
+        const freqSteps = [0, 1000, 2000, 4000, 8000, 12000, 16000, 20000, nyquist];
+        ctx.fillStyle = 'white';
+        ctx.font = '12px sans-serif';
+        
+        freqSteps.forEach(freq => {
+            if (freq > nyquist) return;
+            const x = (freq / nyquist) * width;
+            ctx.strokeStyle = 'rgba(100, 100, 150, 0.3)';
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, height);
+            ctx.stroke();
+            
+            const label = freq >= 1000 ? `${freq/1000}k` : freq;
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.fillText(label, x + 3, height - 5);
+        });
+    }
+
+    function drawSpectrum(ctx, data, width, height, fillColor, strokeColor) {
+        const barWidth = width / data.length;
+        let x = 0;
+
+        ctx.fillStyle = fillColor;
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+
+        for (let i = 0; i < data.length; i++) {
+            const barHeight = (data[i] / 255) * height;
+            if (i === 0) {
+                ctx.moveTo(x, height - barHeight);
+            } else {
+                ctx.lineTo(x, height - barHeight);
+            }
+            x += barWidth;
+        }
+
+        ctx.stroke();
+
+        ctx.lineTo(width, height);
+        ctx.lineTo(0, height);
+        ctx.closePath();
+        ctx.fill();
+    }
+
+    function updateStats() {
+        if (dataArray1) {
+            const stats1 = calculateStats(dataArray1);
+            peakFreq1.textContent = `${Math.round(stats1.peakFreq)} Hz`;
+            avgAmp1.textContent = `${stats1.avgDb.toFixed(1)} dB`;
+        }
+
+        if (dataArray2) {
+            const stats2 = calculateStats(dataArray2);
+            peakFreq2.textContent = `${Math.round(stats2.peakFreq)} Hz`;
+            avgAmp2.textContent = `${stats2.avgDb.toFixed(1)} dB`;
+        }
+    }
+
+    function calculateStats(dataArray) {
+        let maxIndex = 0;
+        let maxValue = 0;
+        let sum = 0;
+
+        for (let i = 0; i < dataArray.length; i++) {
+            if (dataArray[i] > maxValue) {
+                maxValue = dataArray[i];
+                maxIndex = i;
+            }
+            sum += dataArray[i];
+        }
+
+        const nyquist = audioContext.sampleRate / 2;
+        const peakFreq = (maxIndex / dataArray.length) * nyquist;
+        const avg = sum / dataArray.length;
+        const avgDb = 20 * Math.log10(Math.max(avg / 255, 0.001));
+
+        return { peakFreq, avgDb };
+    }
+
+    function updateTimeDisplay() {
+        if (!audioElement1 || isSeeking) return;
+        currentTime.textContent = formatTime(audioElement1.currentTime);
+        seekBar.value = audioElement1.currentTime;
+    }
+
+    function formatTime(seconds) {
+        if (isNaN(seconds)) return '0:00';
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    function downloadImage(canvas, filename) {
+        const link = document.createElement('a');
+        link.download = filename;
+        link.href = canvas.toDataURL();
+        link.click();
+    }
+</script>
+```
+
+</body>
+</html>
