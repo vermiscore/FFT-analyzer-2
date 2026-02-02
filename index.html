@@ -718,7 +718,7 @@
 
         fftCtxMic.fillStyle = 'white';
         fftCtxMic.font = 'bold 16px sans-serif';
-        fftCtxMic.fillText('Real-time Microphone FFT (0-20kHz)', 10, 25);
+        fftCtxMic.fillText('Real-time Microphone FFT (20Hz-20kHz, Log Scale)', 10, 25);
     }
 
     function drawAverageSpectrumMic() {
@@ -741,7 +741,7 @@
 
         avgCtxMic.fillStyle = 'white';
         avgCtxMic.font = 'bold 16px sans-serif';
-        avgCtxMic.fillText('Average Power Spectrum (Microphone, 0-20kHz)', 10, 25);
+        avgCtxMic.fillText('Average Power Spectrum (Microphone, 20Hz-20kHz, Log Scale)', 10, 25);
     }
 
     function drawPeakSpectrumMic() {
@@ -759,7 +759,7 @@
 
         peakCtxMic.fillStyle = 'white';
         peakCtxMic.font = 'bold 16px sans-serif';
-        peakCtxMic.fillText('Peak Hold Spectrum (Microphone, 0-20kHz)', 10, 25);
+        peakCtxMic.fillText('Peak Hold Spectrum (Microphone, 20Hz-20kHz, Log Scale)', 10, 25);
     }
 
     function updateStatsMic() {
@@ -984,7 +984,7 @@
 
         ctx.fillStyle = 'white';
         ctx.font = 'bold 16px sans-serif';
-        ctx.fillText('Real-time FFT Spectrum (0-20kHz)', 10, 25);
+        ctx.fillText('Real-time FFT Spectrum (20Hz-20kHz, Log Scale)', 10, 25);
     }
 
     function drawAverageSpectrum(fileNum) {
@@ -1013,7 +1013,7 @@
 
         ctx.fillStyle = 'white';
         ctx.font = 'bold 16px sans-serif';
-        ctx.fillText('Average Power Spectrum (0-20kHz)', 10, 25);
+        ctx.fillText('Average Power Spectrum (20Hz-20kHz, Log Scale)', 10, 25);
     }
 
     function drawPeakSpectrum(fileNum) {
@@ -1036,7 +1036,16 @@
 
         ctx.fillStyle = 'white';
         ctx.font = 'bold 16px sans-serif';
-        ctx.fillText('Peak Hold Spectrum (0-20kHz)', 10, 25);
+        ctx.fillText('Peak Hold Spectrum (20Hz-20kHz, Log Scale)', 10, 25);
+    }
+
+    function freqToLogX(freq, width) {
+        // Logarithmic scale: 20Hz to 20kHz
+        const minFreq = 20;
+        const maxFreq = 20000;
+        if (freq < minFreq) freq = minFreq;
+        if (freq > maxFreq) freq = maxFreq;
+        return (Math.log10(freq) - Math.log10(minFreq)) / (Math.log10(maxFreq) - Math.log10(minFreq)) * width;
     }
 
     function drawGrid(ctx, width, height, nyquist) {
@@ -1057,16 +1066,13 @@
             ctx.fillText(`${db} dB`, 5, y - 3);
         }
 
-        // Vertical grid lines with frequency labels
-        // Using logarithmic-like spacing for better low-frequency visibility
-        const freqSteps = [0, 100, 200, 500, 1000, 2000, 4000, 8000, 12000, 16000, 20000];
-        const maxFreq = 20000; // Display up to 20kHz
+        // Vertical grid lines with frequency labels (logarithmic scale)
+        const freqSteps = [20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000];
         ctx.fillStyle = 'white';
         ctx.font = '12px sans-serif';
         
         freqSteps.forEach(freq => {
-            if (freq > maxFreq) return;
-            const x = (freq / maxFreq) * width;
+            const x = freqToLogX(freq, width);
             ctx.strokeStyle = 'rgba(100, 100, 150, 0.3)';
             ctx.beginPath();
             ctx.moveTo(x, 0);
@@ -1080,31 +1086,38 @@
     }
 
     function drawSpectrum(ctx, data, width, height, fillColor, strokeColor) {
-        const maxFreq = 20000; // Display up to 20kHz
+        const minFreq = 20;
+        const maxFreq = 20000;
         const nyquist = audioContext.sampleRate / 2;
-        const maxBin = Math.floor((maxFreq / nyquist) * data.length);
         
-        const barWidth = width / maxBin;
-        let x = 0;
-
         ctx.fillStyle = fillColor;
         ctx.strokeStyle = strokeColor;
         ctx.lineWidth = 2;
         ctx.beginPath();
 
-        for (let i = 0; i < maxBin; i++) {
+        let firstPoint = true;
+        
+        // Draw spectrum using logarithmic frequency scale
+        for (let i = 0; i < data.length; i++) {
+            const freq = (i / data.length) * nyquist;
+            if (freq < minFreq || freq > maxFreq) continue;
+            
+            const x = freqToLogX(freq, width);
             const barHeight = (data[i] / 255) * height;
-            if (i === 0) {
+            
+            if (firstPoint) {
                 ctx.moveTo(x, height - barHeight);
+                firstPoint = false;
             } else {
                 ctx.lineTo(x, height - barHeight);
             }
-            x += barWidth;
         }
 
         ctx.stroke();
 
-        ctx.lineTo(width, height);
+        // Fill area under curve
+        const lastX = freqToLogX(maxFreq, width);
+        ctx.lineTo(lastX, height);
         ctx.lineTo(0, height);
         ctx.closePath();
         ctx.fill();
