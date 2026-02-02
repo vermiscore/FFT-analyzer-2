@@ -718,7 +718,7 @@
 
         fftCtxMic.fillStyle = 'white';
         fftCtxMic.font = 'bold 16px sans-serif';
-        fftCtxMic.fillText('Real-time Microphone FFT', 10, 25);
+        fftCtxMic.fillText('Real-time Microphone FFT (0-20kHz)', 10, 25);
     }
 
     function drawAverageSpectrumMic() {
@@ -741,7 +741,7 @@
 
         avgCtxMic.fillStyle = 'white';
         avgCtxMic.font = 'bold 16px sans-serif';
-        avgCtxMic.fillText('Average Power Spectrum (Microphone)', 10, 25);
+        avgCtxMic.fillText('Average Power Spectrum (Microphone, 0-20kHz)', 10, 25);
     }
 
     function drawPeakSpectrumMic() {
@@ -759,7 +759,7 @@
 
         peakCtxMic.fillStyle = 'white';
         peakCtxMic.font = 'bold 16px sans-serif';
-        peakCtxMic.fillText('Peak Hold Spectrum (Microphone)', 10, 25);
+        peakCtxMic.fillText('Peak Hold Spectrum (Microphone, 0-20kHz)', 10, 25);
     }
 
     function updateStatsMic() {
@@ -984,7 +984,7 @@
 
         ctx.fillStyle = 'white';
         ctx.font = 'bold 16px sans-serif';
-        ctx.fillText('Real-time FFT Spectrum', 10, 25);
+        ctx.fillText('Real-time FFT Spectrum (0-20kHz)', 10, 25);
     }
 
     function drawAverageSpectrum(fileNum) {
@@ -1013,7 +1013,7 @@
 
         ctx.fillStyle = 'white';
         ctx.font = 'bold 16px sans-serif';
-        ctx.fillText('Average Power Spectrum', 10, 25);
+        ctx.fillText('Average Power Spectrum (0-20kHz)', 10, 25);
     }
 
     function drawPeakSpectrum(fileNum) {
@@ -1036,7 +1036,7 @@
 
         ctx.fillStyle = 'white';
         ctx.font = 'bold 16px sans-serif';
-        ctx.fillText('Peak Hold Spectrum', 10, 25);
+        ctx.fillText('Peak Hold Spectrum (0-20kHz)', 10, 25);
     }
 
     function drawGrid(ctx, width, height, nyquist) {
@@ -1058,13 +1058,15 @@
         }
 
         // Vertical grid lines with frequency labels
-        const freqSteps = [0, 1000, 2000, 4000, 8000, 12000, 16000, 20000, nyquist];
+        // Using logarithmic-like spacing for better low-frequency visibility
+        const freqSteps = [0, 100, 200, 500, 1000, 2000, 4000, 8000, 12000, 16000, 20000];
+        const maxFreq = 20000; // Display up to 20kHz
         ctx.fillStyle = 'white';
         ctx.font = '12px sans-serif';
         
         freqSteps.forEach(freq => {
-            if (freq > nyquist) return;
-            const x = (freq / nyquist) * width;
+            if (freq > maxFreq) return;
+            const x = (freq / maxFreq) * width;
             ctx.strokeStyle = 'rgba(100, 100, 150, 0.3)';
             ctx.beginPath();
             ctx.moveTo(x, 0);
@@ -1078,7 +1080,11 @@
     }
 
     function drawSpectrum(ctx, data, width, height, fillColor, strokeColor) {
-        const barWidth = width / data.length;
+        const maxFreq = 20000; // Display up to 20kHz
+        const nyquist = audioContext.sampleRate / 2;
+        const maxBin = Math.floor((maxFreq / nyquist) * data.length);
+        
+        const barWidth = width / maxBin;
         let x = 0;
 
         ctx.fillStyle = fillColor;
@@ -1086,7 +1092,7 @@
         ctx.lineWidth = 2;
         ctx.beginPath();
 
-        for (let i = 0; i < data.length; i++) {
+        for (let i = 0; i < maxBin; i++) {
             const barHeight = (data[i] / 255) * height;
             if (i === 0) {
                 ctx.moveTo(x, height - barHeight);
