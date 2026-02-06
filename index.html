@@ -1,149 +1,90 @@
 <!DOCTYPE html>
-<html lang="en">
+
+<html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vocabulary App</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <title>FFT Audio Analyzer (with Microphone)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-<style>
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
-
+```
     body {
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        background: linear-gradient(135deg, #1a3a2e 0%, #2d5f4d 100%);
-        display: flex;
-        justify-content: center;
-        align-items: center;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         min-height: 100vh;
-        padding: 10px;
+        padding: 20px;
     }
 
-    .app-container {
-        width: 100%;
-        max-width: 500px;
-        height: 600px;
-        background: linear-gradient(135deg, #234d3f 0%, #2d6552 100%);
-        position: relative;
+    .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        padding: 40px;
+    }
+
+    h1 {
+        color: #333;
+        margin-bottom: 30px;
+        text-align: center;
+        font-size: 2em;
+    }
+
+    .info {
+        background: #e3f2fd;
+        border-left: 4px solid #2196f3;
+        padding: 15px;
+        border-radius: 4px;
+        margin-bottom: 30px;
+    }
+
+    .file-section {
+        background: #f8f9fa;
+        border: 2px solid #667eea;
         border-radius: 12px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        overflow: hidden;
+        padding: 30px;
+        margin-bottom: 30px;
     }
 
-    .panel {
-        width: 100%;
-        height: 100%;
-        position: absolute;
-        top: 0;
-        left: 0;
-        display: none;
-        background: linear-gradient(135deg, #234d3f 0%, #2d6552 100%);
-        overflow-y: auto;
+    .mic-section {
+        background: #fff3e0;
+        border: 2px solid #ff9800;
+        border-radius: 12px;
+        padding: 30px;
+        margin-bottom: 30px;
     }
 
-    .panel.active {
-        display: block;
-    }
-
-    .btn {
-        background: linear-gradient(135deg, #4a9d7f 0%, #3d8568 100%);
-        color: white;
-        border: none;
-        cursor: pointer;
-        font-size: 16px;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        font-weight: 600;
-    }
-
-    .btn:hover {
-        background: linear-gradient(135deg, #5bb594 0%, #4a9d7f 100%);
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
-    }
-
-    .btn:active {
-        background: linear-gradient(135deg, #3d8568 0%, #2d6552 100%);
-        transform: translateY(0);
-    }
-
-    #homeTitle {
-        position: absolute;
-        top: 50px;
-        left: 50%;
-        transform: translateX(-50%);
-        color: #e8f5e9;
-        font-size: 32px;
-        font-weight: 700;
-        text-align: center;
-        margin: 0;
-        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-    }
-
-    .home-btn {
-        width: 100px;
-        height: 40px;
-        position: absolute;
-        left: 50%;
-        transform: translateX(-50%);
-    }
-
-    #btnStart {
-        top: 150px;
-    }
-
-    #btnReset {
-        top: 200px;
-    }
-
-    #btnXOnly {
-        top: 250px;
-    }
-
-    #btnImport {
-        top: 300px;
-    }
-
-    #importPanel {
-        padding: 30px 20px 40px 20px;
-    }
-
-    .import-title {
-        text-align: center;
-        color: #e8f5e9;
-        padding-top: 10px;
-        margin-bottom: 15px;
+    .section-header {
         font-size: 24px;
-        font-weight: 600;
+        font-weight: 700;
+        color: #667eea;
+        margin-bottom: 20px;
+        text-align: center;
     }
 
-    .import-description {
-        text-align: center;
-        color: #c8e6c9;
-        font-size: 13px;
-        margin-bottom: 20px;
-        line-height: 1.5;
-        padding: 0 10px;
+    .mic-section .section-header {
+        color: #ff9800;
     }
 
     .upload-box {
-        background: rgba(74, 157, 127, 0.2);
-        border: 2px dashed #4a9d7f;
+        background: white;
+        border: 2px dashed #667eea;
         border-radius: 12px;
-        padding: 25px;
+        padding: 30px;
         text-align: center;
         margin-bottom: 20px;
         transition: all 0.3s;
     }
 
     .upload-box:hover {
-        border-color: #5bb594;
-        background: rgba(74, 157, 127, 0.3);
+        border-color: #764ba2;
+        background: #f0f1ff;
     }
 
     .file-input-wrapper {
@@ -156,7 +97,7 @@
     }
 
     .upload-button {
-        background: linear-gradient(135deg, #4a9d7f 0%, #3d8568 100%);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         padding: 12px 30px;
         border-radius: 8px;
@@ -164,14 +105,11 @@
         font-weight: 600;
         cursor: pointer;
         display: inline-block;
-        transition: all 0.2s;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        transition: transform 0.2s;
     }
 
     .upload-button:hover {
-        background: linear-gradient(135deg, #5bb594 0%, #4a9d7f 100%);
         transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
     }
 
     .upload-button:active {
@@ -179,545 +117,1073 @@
     }
 
     .file-name {
-        color: #c8e6c9;
+        color: #667eea;
         font-weight: 600;
-        margin-top: 12px;
+        margin-top: 10px;
         font-size: 13px;
-        min-height: 20px;
     }
 
-    #sheetSelector {
-        width: calc(100% - 40px);
-        max-width: 400px;
-        padding: 12px;
-        margin: 15px auto;
-        display: block;
-        font-size: 14px;
-        background: #2d5f4d;
-        color: #e8f5e9;
-        border: 2px solid #4a9d7f;
+    .controls {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    button {
+        background: #667eea;
+        color: white;
+        border: none;
+        padding: 12px 24px;
         border-radius: 8px;
-    }
-
-    .range-selector {
-        width: calc(100% - 40px);
-        max-width: 400px;
-        margin: 15px auto;
-        padding: 15px;
-        background: rgba(74, 157, 127, 0.2);
-        border-radius: 8px;
-        display: none;
-    }
-
-    .range-selector.visible {
-        display: block;
-    }
-
-    .range-label {
-        color: #e8f5e9;
         font-size: 14px;
         font-weight: 600;
-        margin-bottom: 10px;
-        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s;
     }
 
-    .range-inputs {
+    button:hover:not(:disabled) {
+        background: #5568d3;
+        transform: translateY(-1px);
+    }
+
+    button:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+    }
+
+    .mic-section button {
+        background: #ff9800;
+    }
+
+    .mic-section button:hover:not(:disabled) {
+        background: #e68900;
+    }
+
+    .mic-section button.recording {
+        background: #f44336;
+        animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+
+    .seek-container {
+        flex: 1;
+        min-width: 300px;
         display: flex;
         align-items: center;
-        justify-content: center;
         gap: 10px;
-        margin-top: 10px;
     }
 
-    .range-inputs input {
-        width: 80px;
-        padding: 8px;
-        font-size: 14px;
-        background: #2d5f4d;
-        color: #e8f5e9;
-        border: 2px solid #4a9d7f;
-        border-radius: 6px;
+    .seek-bar {
+        flex: 1;
+        height: 8px;
+        -webkit-appearance: none;
+        appearance: none;
+        background: #ddd;
+        border-radius: 4px;
+        outline: none;
+        cursor: pointer;
+    }
+
+    .seek-bar::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        background: #667eea;
+        border-radius: 50%;
+        cursor: pointer;
+    }
+
+    .seek-bar::-moz-range-thumb {
+        width: 18px;
+        height: 18px;
+        background: #667eea;
+        border-radius: 50%;
+        cursor: pointer;
+        border: none;
+    }
+
+    .canvas-container {
+        background: #1a1a2e;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    canvas {
+        width: 100%;
+        height: auto;
+        border-radius: 8px;
+    }
+
+    .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    .stat-card {
+        background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+        padding: 15px;
+        border-radius: 8px;
+        border: 1px solid #667eea30;
+    }
+
+    .mic-section .stat-card {
+        background: linear-gradient(135deg, #ff980015 0%, #ff980025 100%);
+        border: 1px solid #ff980030;
+    }
+
+    .stat-label {
+        font-size: 12px;
+        color: #666;
+        margin-bottom: 5px;
+    }
+
+    .stat-value {
+        font-size: 20px;
+        font-weight: 700;
+        color: #333;
+    }
+
+    .download-section {
         text-align: center;
+        margin-top: 20px;
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        flex-wrap: wrap;
     }
 
-    .range-inputs span {
-        color: #c8e6c9;
+    .download-btn {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        font-size: 16px;
+        padding: 15px 40px;
+    }
+
+    .download-btn:hover:not(:disabled) {
+        background: linear-gradient(135deg, #0e8577 0%, #2dd968 100%);
+    }
+
+    .mic-status {
+        text-align: center;
+        padding: 10px;
+        margin-bottom: 15px;
+        border-radius: 8px;
         font-weight: 600;
     }
 
-    .total-count {
-        color: #c8e6c9;
-        font-size: 12px;
-        text-align: center;
-        margin-top: 8px;
+    .mic-status.inactive {
+        background: #eee;
+        color: #666;
     }
 
-    #importBtn {
-        display: block;
-        margin: 15px auto;
-        width: 200px;
-        height: 45px;
-        font-size: 16px;
+    .mic-status.active {
+        background: #c8e6c9;
+        color: #2e7d32;
     }
 
-    #backBtn {
-        display: block;
-        margin: 15px auto 30px auto;
-        width: 150px;
-        height: 40px;
+    .mic-status.recording {
+        background: #ffcdd2;
+        color: #c62828;
     }
 
-    #importStatus {
-        text-align: center;
-        margin-top: 15px;
-        margin-bottom: 20px;
-        color: #c8e6c9;
-        font-weight: 500;
-        padding: 0 20px;
-        min-height: 24px;
-    }
-
-    #wordLabel {
-        position: absolute;
-        top: 40px;
-        left: 5%;
-        width: 90%;
-        max-height: 150px;
-        overflow-y: auto;
-        font-size: 22px;
-        font-weight: normal;
-        text-align: center;
-        color: #e8f5e9;
-        padding: 10px;
-        word-wrap: break-word;
-        overflow-wrap: break-word;
-        -webkit-overflow-scrolling: touch;
-    }
-
-    #infoLabel {
-        position: absolute;
-        top: 200px;
-        left: 5%;
-        width: 90%;
-        max-height: 140px;
-        overflow-y: auto;
-        font-size: 15px;
-        text-align: center;
-        color: #c8e6c9;
-        white-space: pre-line;
-        padding: 10px;
-        line-height: 1.5;
-        word-wrap: break-word;
-        overflow-wrap: break-word;
-        -webkit-overflow-scrolling: touch;
-    }
-
-    .quiz-btn {
-        width: 90px;
-        height: 40px;
-        position: absolute;
-        font-size: 18px;
-        left: 50%;
-    }
-
-    #btnCorrect {
-        top: 300px;
-        transform: translateX(calc(-100% - 5px));
-    }
-
-    #btnWrong {
-        top: 300px;
-        transform: translateX(5px);
-    }
-
-    #btnNext {
-        top: 350px;
-        transform: translateX(calc(-100% - 5px));
-    }
-
-    #btnHome {
-        top: 350px;
-        transform: translateX(5px);
-    }
-
-    @media (max-width: 400px) {
-        .upload-box {
+    @media (max-width: 768px) {
+        .container {
             padding: 20px;
-        }
-
-        .upload-button {
-            padding: 10px 24px;
-            font-size: 13px;
         }
     }
 </style>
+```
 
 </head>
-
 <body>
-    <div class="app-container">
-        <!-- Home Panel -->
-        <div id="homePanel" class="panel active">
-            <h1 id="homeTitle">Vocabulary App</h1>
-            <button id="btnStart" class="btn home-btn">Start</button>
-            <button id="btnReset" class="btn home-btn">Reset</button>
-            <button id="btnXOnly" class="btn home-btn">× Only</button>
-            <button id="btnImport" class="btn home-btn">Import</button>
+    <div class="container">
+        <h1>🎵 FFT Audio Analyzer (with Microphone)</h1>
+
+```
+    <div class="info">
+        <strong>📌 How to use:</strong> Select audio/video files (mp3, wav, mp4, etc.) for File 1 and/or File 2, or use your microphone for real-time analysis. Each source can be analyzed independently.
+    </div>
+
+    <!-- MICROPHONE SECTION -->
+    <div class="mic-section">
+        <div class="section-header">🎤 Microphone Input</div>
+        
+        <div class="mic-status inactive" id="micStatus">Microphone: Inactive</div>
+
+        <div class="controls">
+            <button id="micStartBtn">🎤 Start Microphone</button>
+            <button id="micStopBtn" disabled>⏹️ Stop Microphone</button>
+            <button id="micRecordBtn" disabled>⏺️ Start Recording</button>
+            <button id="micRecordStopBtn" disabled>⏹️ Stop Recording</button>
         </div>
 
-        <!-- Import Panel -->
-        <div id="importPanel" class="panel">
-            <h2 class="import-title">Import Excel File</h2>
-            <p class="import-description">Select an Excel file from your device</p>
-
-            <div class="upload-box">
-                <div class="file-input-wrapper">
-                    <div class="upload-button">📁 Select File</div>
-                    <input 
-                        type="file" 
-                        id="fileInput" 
-                        accept="image/*,video/*,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
-                    />
-                </div>
-                <div class="file-name" id="fileName"></div>
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-label">Peak Frequency</div>
+                <div class="stat-value" id="peakFreqMic">- Hz</div>
             </div>
-
-            <select id="sheetSelector" style="display: none;">
-                <option value="">Select a sheet</option>
-            </select>
-
-            <div id="rangeSelector" class="range-selector">
-                <div class="range-label">Select Question Range</div>
-                <div class="range-inputs">
-                    <input type="number" id="rangeStart" min="1" value="1" />
-                    <span>to</span>
-                    <input type="number" id="rangeEnd" min="1" value="1" />
-                </div>
-                <div class="total-count" id="totalCount"></div>
+            <div class="stat-card">
+                <div class="stat-label">Average Amplitude</div>
+                <div class="stat-value" id="avgAmpMic">- dB</div>
             </div>
-
-            <button id="importBtn" class="btn" style="display: none;">Load Selected Range</button>
-            <button id="backBtn" class="btn">Back</button>
-            <div id="importStatus"></div>
+            <div class="stat-card">
+                <div class="stat-label">Recording Time</div>
+                <div class="stat-value" id="recordingTime">0:00</div>
+            </div>
         </div>
 
-        <!-- Quiz Panel -->
-        <div id="quizPanel" class="panel">
-            <div id="wordLabel"></div>
-            <div id="infoLabel"></div>
-            <button id="btnCorrect" class="btn quiz-btn">〇</button>
-            <button id="btnWrong" class="btn quiz-btn">×</button>
-            <button id="btnNext" class="btn quiz-btn">Next</button>
-            <button id="btnHome" class="btn quiz-btn">Home</button>
+        <div class="canvas-container">
+            <canvas id="fftCanvasMic" width="1200" height="500"></canvas>
+        </div>
+
+        <div class="canvas-container">
+            <canvas id="avgCanvasMic" width="1200" height="500"></canvas>
+        </div>
+
+        <div class="canvas-container">
+            <canvas id="peakCanvasMic" width="1200" height="500"></canvas>
+        </div>
+
+        <div class="download-section">
+            <button class="download-btn" id="downloadAvgBtnMic" disabled>💾 Download Average Spectrum</button>
+            <button class="download-btn" id="downloadPeakBtnMic" disabled>💾 Download Peak Spectrum</button>
         </div>
     </div>
 
+    <!-- FILE 1 SECTION -->
+    <div class="file-section">
+        <div class="section-header">📁 File 1</div>
+        
+        <div class="upload-box">
+            <div class="file-input-wrapper">
+                <div class="upload-button">Select File 1</div>
+                <input type="file" id="fileInput1" accept="audio/*,video/*,.mp3,.wav,.mp4,.avi,.mov,.webm">
+            </div>
+            <div class="file-name" id="fileName1"></div>
+        </div>
+
+        <div class="controls">
+            <button id="playBtn1" disabled>▶️ Play</button>
+            <button id="pauseBtn1" disabled>⏸️ Pause</button>
+            <button id="stopBtn1" disabled>⏹️ Stop</button>
+            <div class="seek-container">
+                <span id="currentTime1">0:00</span>
+                <input type="range" class="seek-bar" id="seekBar1" min="0" max="100" value="0" disabled>
+                <span id="duration1">0:00</span>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-label">Peak Frequency</div>
+                <div class="stat-value" id="peakFreq1">- Hz</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Average Amplitude</div>
+                <div class="stat-value" id="avgAmp1">- dB</div>
+            </div>
+        </div>
+
+        <div class="canvas-container">
+            <canvas id="fftCanvas1" width="1200" height="500"></canvas>
+        </div>
+
+        <div class="canvas-container">
+            <canvas id="avgCanvas1" width="1200" height="500"></canvas>
+        </div>
+
+        <div class="canvas-container">
+            <canvas id="peakCanvas1" width="1200" height="500"></canvas>
+        </div>
+
+        <div class="download-section">
+            <button class="download-btn" id="downloadAvgBtn1" disabled>💾 Download Average Spectrum</button>
+            <button class="download-btn" id="downloadPeakBtn1" disabled>💾 Download Peak Spectrum</button>
+        </div>
+    </div>
+
+    <!-- FILE 2 SECTION -->
+    <div class="file-section">
+        <div class="section-header">📁 File 2</div>
+        
+        <div class="upload-box">
+            <div class="file-input-wrapper">
+                <div class="upload-button">Select File 2</div>
+                <input type="file" id="fileInput2" accept="audio/*,video/*,.mp3,.wav,.mp4,.avi,.mov,.webm">
+            </div>
+            <div class="file-name" id="fileName2"></div>
+        </div>
+
+        <div class="controls">
+            <button id="playBtn2" disabled>▶️ Play</button>
+            <button id="pauseBtn2" disabled>⏸️ Pause</button>
+            <button id="stopBtn2" disabled>⏹️ Stop</button>
+            <div class="seek-container">
+                <span id="currentTime2">0:00</span>
+                <input type="range" class="seek-bar" id="seekBar2" min="0" max="100" value="0" disabled>
+                <span id="duration2">0:00</span>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-label">Peak Frequency</div>
+                <div class="stat-value" id="peakFreq2">- Hz</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Average Amplitude</div>
+                <div class="stat-value" id="avgAmp2">- dB</div>
+            </div>
+        </div>
+
+        <div class="canvas-container">
+            <canvas id="fftCanvas2" width="1200" height="500"></canvas>
+        </div>
+
+        <div class="canvas-container">
+            <canvas id="avgCanvas2" width="1200" height="500"></canvas>
+        </div>
+
+        <div class="canvas-container">
+            <canvas id="peakCanvas2" width="1200" height="500"></canvas>
+        </div>
+
+        <div class="download-section">
+            <button class="download-btn" id="downloadAvgBtn2" disabled>💾 Download Average Spectrum</button>
+            <button class="download-btn" id="downloadPeakBtn2" disabled>💾 Download Peak Spectrum</button>
+        </div>
+    </div>
+</div>
+
 <script>
-    let allWords = [
-        { word: "Apple", meaning: "りんご", example: "I like apples." },
-        { word: "Banana", meaning: "バナナ", example: "Bananas are yellow." },
-        { word: "Cat", meaning: "猫", example: "The cat is sleeping." },
-        { word: "Dog", meaning: "犬", example: "The dog is barking." },
-        { word: "House", meaning: "家", example: "This is my house." },
-        { word: "Book", meaning: "本", example: "I read a book." },
-        { word: "Water", meaning: "水", example: "Please drink water." },
-        { word: "Sun", meaning: "太陽", example: "The sun is bright." }
-    ];
+    let audioContext;
 
-    let workbook = null;
-    let currentSheetData = null;
+    // File 1 variables
+    let analyser1, dataArray1, bufferLength1;
+    let audioElement1, source1, animationId1;
+    let averageSpectrum1, peakSpectrum1, spectrumCount1 = 0;
+    let isPlaying1 = false, isSeeking1 = false;
 
-    let state = {
-        remainingIdx: Array.from({ length: allWords.length }, (_, i) => i),
-        wrongWords: [],
-        correctWords: [],
-        currentWordIdx: -1,
-        xOnlyMode: false
-    };
+    // File 2 variables
+    let analyser2, dataArray2, bufferLength2;
+    let audioElement2, source2, animationId2;
+    let averageSpectrum2, peakSpectrum2, spectrumCount2 = 0;
+    let isPlaying2 = false, isSeeking2 = false;
 
-    function loadVocabulary() {
-        const saved = localStorage.getItem('vocabData');
-        if (saved) {
-            allWords = JSON.parse(saved);
-            state.remainingIdx = Array.from({ length: allWords.length }, (_, i) => i);
+    // Microphone variables
+    let analyserMic, dataArrayMic, bufferLengthMic;
+    let micStream, micSource, animationIdMic;
+    let averageSpectrumMic, peakSpectrumMic, spectrumCountMic = 0;
+    let isMicActive = false, isRecording = false;
+    let recordingStartTime = 0;
+    let recordingIntervalId = null;
+
+    // File 1 elements
+    const fileInput1 = document.getElementById('fileInput1');
+    const uploadButton1 = document.querySelectorAll('.upload-button')[0];
+    const playBtn1 = document.getElementById('playBtn1');
+    const pauseBtn1 = document.getElementById('pauseBtn1');
+    const stopBtn1 = document.getElementById('stopBtn1');
+    const seekBar1 = document.getElementById('seekBar1');
+    const currentTime1 = document.getElementById('currentTime1');
+    const duration1 = document.getElementById('duration1');
+    const fftCanvas1 = document.getElementById('fftCanvas1');
+    const avgCanvas1 = document.getElementById('avgCanvas1');
+    const peakCanvas1 = document.getElementById('peakCanvas1');
+    const fftCtx1 = fftCanvas1.getContext('2d');
+    const avgCtx1 = avgCanvas1.getContext('2d');
+    const peakCtx1 = peakCanvas1.getContext('2d');
+    const fileName1 = document.getElementById('fileName1');
+    const peakFreq1 = document.getElementById('peakFreq1');
+    const avgAmp1 = document.getElementById('avgAmp1');
+    const downloadAvgBtn1 = document.getElementById('downloadAvgBtn1');
+    const downloadPeakBtn1 = document.getElementById('downloadPeakBtn1');
+
+    // File 2 elements
+    const fileInput2 = document.getElementById('fileInput2');
+    const uploadButton2 = document.querySelectorAll('.upload-button')[1];
+    const playBtn2 = document.getElementById('playBtn2');
+    const pauseBtn2 = document.getElementById('pauseBtn2');
+    const stopBtn2 = document.getElementById('stopBtn2');
+    const seekBar2 = document.getElementById('seekBar2');
+    const currentTime2 = document.getElementById('currentTime2');
+    const duration2 = document.getElementById('duration2');
+    const fftCanvas2 = document.getElementById('fftCanvas2');
+    const avgCanvas2 = document.getElementById('avgCanvas2');
+    const peakCanvas2 = document.getElementById('peakCanvas2');
+    const fftCtx2 = fftCanvas2.getContext('2d');
+    const avgCtx2 = avgCanvas2.getContext('2d');
+    const peakCtx2 = peakCanvas2.getContext('2d');
+    const fileName2 = document.getElementById('fileName2');
+    const peakFreq2 = document.getElementById('peakFreq2');
+    const avgAmp2 = document.getElementById('avgAmp2');
+    const downloadAvgBtn2 = document.getElementById('downloadAvgBtn2');
+    const downloadPeakBtn2 = document.getElementById('downloadPeakBtn2');
+
+    // Microphone elements
+    const micStartBtn = document.getElementById('micStartBtn');
+    const micStopBtn = document.getElementById('micStopBtn');
+    const micRecordBtn = document.getElementById('micRecordBtn');
+    const micRecordStopBtn = document.getElementById('micRecordStopBtn');
+    const micStatus = document.getElementById('micStatus');
+    const fftCanvasMic = document.getElementById('fftCanvasMic');
+    const avgCanvasMic = document.getElementById('avgCanvasMic');
+    const peakCanvasMic = document.getElementById('peakCanvasMic');
+    const fftCtxMic = fftCanvasMic.getContext('2d');
+    const avgCtxMic = avgCanvasMic.getContext('2d');
+    const peakCtxMic = peakCanvasMic.getContext('2d');
+    const peakFreqMic = document.getElementById('peakFreqMic');
+    const avgAmpMic = document.getElementById('avgAmpMic');
+    const recordingTime = document.getElementById('recordingTime');
+    const downloadAvgBtnMic = document.getElementById('downloadAvgBtnMic');
+    const downloadPeakBtnMic = document.getElementById('downloadPeakBtnMic');
+
+    // File 1 event listeners
+    uploadButton1.addEventListener('click', () => fileInput1.click());
+    fileInput1.addEventListener('change', (e) => handleFileSelect(e, 1));
+    playBtn1.addEventListener('click', () => play(1));
+    pauseBtn1.addEventListener('click', () => pause(1));
+    stopBtn1.addEventListener('click', () => stop(1));
+    seekBar1.addEventListener('input', (e) => handleSeek(e, 1));
+    seekBar1.addEventListener('change', () => handleSeekEnd(1));
+    downloadAvgBtn1.addEventListener('click', () => downloadImage(avgCanvas1, 'file1_average_spectrum.png'));
+    downloadPeakBtn1.addEventListener('click', () => downloadImage(peakCanvas1, 'file1_peak_spectrum.png'));
+
+    // File 2 event listeners
+    uploadButton2.addEventListener('click', () => fileInput2.click());
+    fileInput2.addEventListener('change', (e) => handleFileSelect(e, 2));
+    playBtn2.addEventListener('click', () => play(2));
+    pauseBtn2.addEventListener('click', () => pause(2));
+    stopBtn2.addEventListener('click', () => stop(2));
+    seekBar2.addEventListener('input', (e) => handleSeek(e, 2));
+    seekBar2.addEventListener('change', () => handleSeekEnd(2));
+    downloadAvgBtn2.addEventListener('click', () => downloadImage(avgCanvas2, 'file2_average_spectrum.png'));
+    downloadPeakBtn2.addEventListener('click', () => downloadImage(peakCanvas2, 'file2_peak_spectrum.png'));
+
+    // Microphone event listeners
+    micStartBtn.addEventListener('click', startMicrophone);
+    micStopBtn.addEventListener('click', stopMicrophone);
+    micRecordBtn.addEventListener('click', startRecording);
+    micRecordStopBtn.addEventListener('click', stopRecording);
+    downloadAvgBtnMic.addEventListener('click', () => downloadImage(avgCanvasMic, 'microphone_average_spectrum.png'));
+    downloadPeakBtnMic.addEventListener('click', () => downloadImage(peakCanvasMic, 'microphone_peak_spectrum.png'));
+
+    async function startMicrophone() {
+        try {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+
+            micStream = await navigator.mediaDevices.getUserMedia({ 
+                audio: {
+                    echoCancellation: false,
+                    noiseSuppression: false,
+                    autoGainControl: false
+                } 
+            });
+
+            analyserMic = audioContext.createAnalyser();
+            analyserMic.fftSize = 2048;
+            bufferLengthMic = analyserMic.frequencyBinCount;
+            dataArrayMic = new Uint8Array(bufferLengthMic);
+            averageSpectrumMic = new Float32Array(bufferLengthMic);
+            peakSpectrumMic = new Float32Array(bufferLengthMic);
+            spectrumCountMic = 0;
+
+            micSource = audioContext.createMediaStreamSource(micStream);
+            micSource.connect(analyserMic);
+
+            isMicActive = true;
+            updateMicStatus();
+            micStartBtn.disabled = true;
+            micStopBtn.disabled = false;
+            micRecordBtn.disabled = false;
+
+            visualizeMic();
+        } catch (error) {
+            alert('マイクへのアクセスに失敗しました: ' + error.message);
+            console.error('Microphone error:', error);
         }
     }
 
-    function saveVocabulary() {
-        localStorage.setItem('vocabData', JSON.stringify(allWords));
+    function stopMicrophone() {
+        if (micStream) {
+            micStream.getTracks().forEach(track => track.stop());
+        }
+        if (animationIdMic) {
+            cancelAnimationFrame(animationIdMic);
+        }
+        if (isRecording) {
+            stopRecording();
+        }
+
+        isMicActive = false;
+        updateMicStatus();
+        micStartBtn.disabled = false;
+        micStopBtn.disabled = true;
+        micRecordBtn.disabled = true;
     }
 
-    function loadProgress() {
-        const saved = localStorage.getItem('vocabProgress');
-        if (saved) {
-            const data = JSON.parse(saved);
-            state.remainingIdx = data.remainingIdx || state.remainingIdx;
-            state.wrongWords = data.wrongWords || [];
-            state.correctWords = data.correctWords || [];
+    function startRecording() {
+        averageSpectrumMic = new Float32Array(bufferLengthMic);
+        peakSpectrumMic = new Float32Array(bufferLengthMic);
+        spectrumCountMic = 0;
+        recordingStartTime = Date.now();
+        isRecording = true;
+
+        updateMicStatus();
+        micRecordBtn.disabled = true;
+        micRecordStopBtn.disabled = false;
+        micRecordStopBtn.classList.add('recording');
+
+        recordingIntervalId = setInterval(updateRecordingTime, 100);
+    }
+
+    function stopRecording() {
+        isRecording = false;
+        updateMicStatus();
+        micRecordBtn.disabled = false;
+        micRecordStopBtn.disabled = true;
+        micRecordStopBtn.classList.remove('recording');
+
+        if (recordingIntervalId) {
+            clearInterval(recordingIntervalId);
+            recordingIntervalId = null;
+        }
+
+        drawAverageSpectrumMic();
+        drawPeakSpectrumMic();
+        downloadAvgBtnMic.disabled = false;
+        downloadPeakBtnMic.disabled = false;
+    }
+
+    function updateMicStatus() {
+        micStatus.className = 'mic-status';
+        if (isRecording) {
+            micStatus.textContent = '🔴 Recording...';
+            micStatus.classList.add('recording');
+        } else if (isMicActive) {
+            micStatus.textContent = '🟢 Microphone Active';
+            micStatus.classList.add('active');
+        } else {
+            micStatus.textContent = 'Microphone: Inactive';
+            micStatus.classList.add('inactive');
         }
     }
 
-    function saveProgress() {
-        localStorage.setItem('vocabProgress', JSON.stringify({
-            remainingIdx: state.remainingIdx,
-            wrongWords: state.wrongWords,
-            correctWords: state.correctWords
-        }));
+    function updateRecordingTime() {
+        const elapsed = (Date.now() - recordingStartTime) / 1000;
+        recordingTime.textContent = formatTime(elapsed);
     }
 
-    function updateRangeSelector(totalRows) {
-        const rangeStart = document.getElementById('rangeStart');
-        const rangeEnd = document.getElementById('rangeEnd');
-        const totalCount = document.getElementById('totalCount');
+    function visualizeMic() {
+        if (!isMicActive) return;
+        animationIdMic = requestAnimationFrame(visualizeMic);
 
-        rangeStart.max = totalRows;
-        rangeEnd.max = totalRows;
-        rangeEnd.value = totalRows;
-
-        totalCount.textContent = `Total questions: ${totalRows}`;
-    }
-
-    function validateRange() {
-        const rangeStart = document.getElementById('rangeStart');
-        const rangeEnd = document.getElementById('rangeEnd');
-
-        const start = parseInt(rangeStart.value);
-        const end = parseInt(rangeEnd.value);
-
-        if (start > end) {
-            rangeStart.value = end;
+        analyserMic.getByteFrequencyData(dataArrayMic);
+        
+        if (isRecording) {
+            for (let i = 0; i < bufferLengthMic; i++) {
+                averageSpectrumMic[i] += dataArrayMic[i];
+                if (dataArrayMic[i] > peakSpectrumMic[i]) {
+                    peakSpectrumMic[i] = dataArrayMic[i];
+                }
+            }
+            spectrumCountMic++;
         }
-        if (end < start) {
-            rangeEnd.value = start;
-        }
+
+        drawFFTMic();
+        updateStatsMic();
     }
 
-    document.getElementById('rangeStart').addEventListener('input', validateRange);
-    document.getElementById('rangeEnd').addEventListener('input', validateRange);
+    function drawFFTMic() {
+        const width = fftCanvasMic.width;
+        const height = fftCanvasMic.height;
+        const nyquist = audioContext.sampleRate / 2;
 
-    document.getElementById('fileInput').addEventListener('change', function (e) {
+        fftCtxMic.fillStyle = 'rgb(20, 20, 40)';
+        fftCtxMic.fillRect(0, 0, width, height);
+
+        drawGrid(fftCtxMic, width, height, nyquist);
+        drawSpectrum(fftCtxMic, dataArrayMic, width, height, 'rgba(255, 152, 0, 0.7)', 'rgb(255, 152, 0)');
+
+        fftCtxMic.fillStyle = 'white';
+        fftCtxMic.font = 'bold 16px sans-serif';
+        fftCtxMic.fillText('Real-time Microphone FFT (20Hz-20kHz, Log Scale)', 10, 25);
+    }
+
+    function drawAverageSpectrumMic() {
+        if (spectrumCountMic === 0) return;
+
+        const width = avgCanvasMic.width;
+        const height = avgCanvasMic.height;
+        const nyquist = audioContext.sampleRate / 2;
+
+        avgCtxMic.fillStyle = 'rgb(20, 20, 40)';
+        avgCtxMic.fillRect(0, 0, width, height);
+
+        drawGrid(avgCtxMic, width, height, nyquist);
+
+        const avgData = new Float32Array(bufferLengthMic);
+        for (let i = 0; i < bufferLengthMic; i++) {
+            avgData[i] = averageSpectrumMic[i] / spectrumCountMic;
+        }
+        drawSpectrum(avgCtxMic, avgData, width, height, 'rgba(255, 152, 0, 0.7)', 'rgb(255, 152, 0)');
+
+        avgCtxMic.fillStyle = 'white';
+        avgCtxMic.font = 'bold 16px sans-serif';
+        avgCtxMic.fillText('Average Power Spectrum (Microphone, 20Hz-20kHz, Log Scale)', 10, 25);
+    }
+
+    function drawPeakSpectrumMic() {
+        if (spectrumCountMic === 0) return;
+
+        const width = peakCanvasMic.width;
+        const height = peakCanvasMic.height;
+        const nyquist = audioContext.sampleRate / 2;
+
+        peakCtxMic.fillStyle = 'rgb(20, 20, 40)';
+        peakCtxMic.fillRect(0, 0, width, height);
+
+        drawGrid(peakCtxMic, width, height, nyquist);
+        drawSpectrum(peakCtxMic, peakSpectrumMic, width, height, 'rgba(255, 152, 0, 0.7)', 'rgb(255, 152, 0)');
+
+        peakCtxMic.fillStyle = 'white';
+        peakCtxMic.font = 'bold 16px sans-serif';
+        peakCtxMic.fillText('Peak Hold Spectrum (Microphone, 20Hz-20kHz, Log Scale)', 10, 25);
+    }
+
+    function updateStatsMic() {
+        const stats = calculateStats(dataArrayMic);
+        peakFreqMic.textContent = `${Math.round(stats.peakFreq)} Hz`;
+        avgAmpMic.textContent = `${stats.avgDb.toFixed(1)} dB`;
+    }
+
+    function handleFileSelect(e, fileNum) {
         const file = e.target.files[0];
         if (!file) return;
 
-        document.getElementById('fileName').textContent = `Selected: ${file.name}`;
-
-        // Check if it's an image or video file
-        if (file.type.startsWith('image/') || file.type.startsWith('video/')) {
-            document.getElementById('importStatus').textContent = 'Image and video files are not supported. Please select an Excel file (.xlsx or .xls).';
-            return;
+        if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
         }
 
-        const reader = new FileReader();
-        reader.onload = function (e) {
-            try {
-                const data = new Uint8Array(e.target.result);
-                workbook = XLSX.read(data, { type: 'array' });
+        if (fileNum === 1) {
+            fileName1.textContent = `Selected: ${file.name}`;
 
-                const selector = document.getElementById('sheetSelector');
-                selector.innerHTML = '<option value="">Select a sheet</option>';
-                workbook.SheetNames.forEach(name => {
-                    const option = document.createElement('option');
-                    option.value = name;
-                    option.textContent = name;
-                    selector.appendChild(option);
-                });
-
-                selector.style.display = 'block';
-                document.getElementById('importStatus').textContent = 'File loaded. Select a sheet.';
-            } catch (error) {
-                document.getElementById('importStatus').textContent = 'Error reading file. Please select a valid Excel file.';
-                console.error('Error:', error);
+            if (audioElement1) {
+                audioElement1.pause();
+                audioElement1.src = '';
             }
-        };
-        
-        reader.onerror = function() {
-            document.getElementById('importStatus').textContent = 'Error reading file. Please try again.';
-        };
-        
-        reader.readAsArrayBuffer(file);
-    });
-
-    document.getElementById('sheetSelector').addEventListener('change', function () {
-        const sheetName = this.value;
-        if (!sheetName) {
-            document.getElementById('rangeSelector').classList.remove('visible');
-            document.getElementById('importBtn').style.display = 'none';
-            return;
-        }
-
-        const worksheet = workbook.Sheets[sheetName];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-
-        const validRows = jsonData.filter(row => row[0] && row[1]);
-        currentSheetData = validRows;
-
-        if (validRows.length === 0) {
-            document.getElementById('importStatus').textContent = 'No valid data found in sheet.';
-            document.getElementById('rangeSelector').classList.remove('visible');
-            document.getElementById('importBtn').style.display = 'none';
-            return;
-        }
-
-        updateRangeSelector(validRows.length);
-        document.getElementById('rangeSelector').classList.add('visible');
-        document.getElementById('importBtn').style.display = 'block';
-        document.getElementById('importStatus').textContent = '';
-    });
-
-    document.getElementById('importBtn').addEventListener('click', function () {
-        const sheetName = document.getElementById('sheetSelector').value;
-        if (!sheetName || !currentSheetData) {
-            document.getElementById('importStatus').textContent = 'Please select a sheet.';
-            return;
-        }
-
-        const rangeStart = parseInt(document.getElementById('rangeStart').value);
-        const rangeEnd = parseInt(document.getElementById('rangeEnd').value);
-
-        const selectedRows = currentSheetData.slice(rangeStart - 1, rangeEnd);
-
-        const newWords = selectedRows.map(row => ({
-            word: String(row[0]).trim(),
-            meaning: String(row[1]).trim(),
-            example: row[2] ? String(row[2]).trim() : ''
-        }));
-
-        if (newWords.length === 0) {
-            document.getElementById('importStatus').textContent = 'No valid data in selected range.';
-            return;
-        }
-
-        allWords = newWords;
-        state.remainingIdx = Array.from({ length: allWords.length }, (_, i) => i);
-        state.wrongWords = [];
-        state.correctWords = [];
-
-        saveVocabulary();
-        saveProgress();
-
-        document.getElementById('importStatus').textContent = `Successfully imported ${newWords.length} words (${rangeStart} to ${rangeEnd})!`;
-
-        setTimeout(() => {
-            switchPanel('home');
-        }, 2000);
-    });
-
-    function showNextWord() {
-        const wordLabel = document.getElementById('wordLabel');
-        const infoLabel = document.getElementById('infoLabel');
-
-        if (state.xOnlyMode) {
-            if (state.wrongWords.length === 0) {
-                wordLabel.textContent = 'No more words!';
-                infoLabel.textContent = '(No "×" words)';
-                return;
+            if (animationId1) {
+                cancelAnimationFrame(animationId1);
             }
 
-            const randomIdx = Math.floor(Math.random() * state.wrongWords.length);
-            state.currentWordIdx = state.wrongWords[randomIdx];
+            analyser1 = audioContext.createAnalyser();
+            analyser1.fftSize = 2048;
+            bufferLength1 = analyser1.frequencyBinCount;
+            dataArray1 = new Uint8Array(bufferLength1);
+            averageSpectrum1 = new Float32Array(bufferLength1);
+            peakSpectrum1 = new Float32Array(bufferLength1);
+            spectrumCount1 = 0;
+
+            audioElement1 = new Audio();
+            audioElement1.crossOrigin = "anonymous";
+            audioElement1.src = URL.createObjectURL(file);
+
+            source1 = audioContext.createMediaElementSource(audioElement1);
+            source1.connect(analyser1);
+            analyser1.connect(audioContext.destination);
+
+            audioElement1.addEventListener('loadedmetadata', () => {
+                playBtn1.disabled = false;
+                pauseBtn1.disabled = false;
+                stopBtn1.disabled = false;
+                seekBar1.disabled = false;
+                seekBar1.max = audioElement1.duration;
+                duration1.textContent = formatTime(audioElement1.duration);
+            });
+
+            audioElement1.addEventListener('timeupdate', () => updateTimeDisplay(1));
+            audioElement1.addEventListener('ended', () => handleEnded(1));
         } else {
-            const possible = state.remainingIdx.filter(idx => !state.correctWords.includes(idx));
+            fileName2.textContent = `Selected: ${file.name}`;
 
-            if (possible.length === 0) {
-                const fallback = Array.from({ length: allWords.length }, (_, i) => i)
-                    .filter(idx => !state.wrongWords.includes(idx) && !state.correctWords.includes(idx));
+            if (audioElement2) {
+                audioElement2.pause();
+                audioElement2.src = '';
+            }
+            if (animationId2) {
+                cancelAnimationFrame(animationId2);
+            }
 
-                if (fallback.length === 0) {
-                    wordLabel.textContent = 'No more words!';
-                    infoLabel.textContent = '';
-                    return;
+            analyser2 = audioContext.createAnalyser();
+            analyser2.fftSize = 2048;
+            bufferLength2 = analyser2.frequencyBinCount;
+            dataArray2 = new Uint8Array(bufferLength2);
+            averageSpectrum2 = new Float32Array(bufferLength2);
+            peakSpectrum2 = new Float32Array(bufferLength2);
+            spectrumCount2 = 0;
+
+            audioElement2 = new Audio();
+            audioElement2.crossOrigin = "anonymous";
+            audioElement2.src = URL.createObjectURL(file);
+
+            source2 = audioContext.createMediaElementSource(audioElement2);
+            source2.connect(analyser2);
+            analyser2.connect(audioContext.destination);
+
+            audioElement2.addEventListener('loadedmetadata', () => {
+                playBtn2.disabled = false;
+                pauseBtn2.disabled = false;
+                stopBtn2.disabled = false;
+                seekBar2.disabled = false;
+                seekBar2.max = audioElement2.duration;
+                duration2.textContent = formatTime(audioElement2.duration);
+            });
+
+            audioElement2.addEventListener('timeupdate', () => updateTimeDisplay(2));
+            audioElement2.addEventListener('ended', () => handleEnded(2));
+        }
+    }
+
+    function play(fileNum) {
+        if (fileNum === 1 && audioElement1) {
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            audioElement1.play();
+            isPlaying1 = true;
+            visualize(1);
+        } else if (fileNum === 2 && audioElement2) {
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            audioElement2.play();
+            isPlaying2 = true;
+            visualize(2);
+        }
+    }
+
+    function pause(fileNum) {
+        if (fileNum === 1 && audioElement1) {
+            audioElement1.pause();
+            isPlaying1 = false;
+            if (animationId1) cancelAnimationFrame(animationId1);
+        } else if (fileNum === 2 && audioElement2) {
+            audioElement2.pause();
+            isPlaying2 = false;
+            if (animationId2) cancelAnimationFrame(animationId2);
+        }
+    }
+
+    function stop(fileNum) {
+        if (fileNum === 1 && audioElement1) {
+            audioElement1.pause();
+            audioElement1.currentTime = 0;
+            isPlaying1 = false;
+            if (animationId1) cancelAnimationFrame(animationId1);
+            updateTimeDisplay(1);
+        } else if (fileNum === 2 && audioElement2) {
+            audioElement2.pause();
+            audioElement2.currentTime = 0;
+            isPlaying2 = false;
+            if (animationId2) cancelAnimationFrame(animationId2);
+            updateTimeDisplay(2);
+        }
+    }
+
+    function handleSeek(e, fileNum) {
+        if (fileNum === 1) {
+            isSeeking1 = true;
+            if (audioElement1) audioElement1.currentTime = e.target.value;
+        } else {
+            isSeeking2 = true;
+            if (audioElement2) audioElement2.currentTime = e.target.value;
+        }
+    }
+
+    function handleSeekEnd(fileNum) {
+        if (fileNum === 1) {
+            isSeeking1 = false;
+        } else {
+            isSeeking2 = false;
+        }
+    }
+
+    function handleEnded(fileNum) {
+        stop(fileNum);
+        drawAverageSpectrum(fileNum);
+        drawPeakSpectrum(fileNum);
+        if (fileNum === 1) {
+            downloadAvgBtn1.disabled = false;
+            downloadPeakBtn1.disabled = false;
+        } else {
+            downloadAvgBtn2.disabled = false;
+            downloadPeakBtn2.disabled = false;
+        }
+    }
+
+    function visualize(fileNum) {
+        if (fileNum === 1) {
+            if (!isPlaying1) return;
+            animationId1 = requestAnimationFrame(() => visualize(1));
+
+            analyser1.getByteFrequencyData(dataArray1);
+            
+            for (let i = 0; i < bufferLength1; i++) {
+                averageSpectrum1[i] += dataArray1[i];
+                if (dataArray1[i] > peakSpectrum1[i]) {
+                    peakSpectrum1[i] = dataArray1[i];
                 }
+            }
+            spectrumCount1++;
 
-                const randomIdx = Math.floor(Math.random() * fallback.length);
-                state.currentWordIdx = fallback[randomIdx];
+            drawFFT(1);
+            updateStats(1);
+        } else {
+            if (!isPlaying2) return;
+            animationId2 = requestAnimationFrame(() => visualize(2));
+
+            analyser2.getByteFrequencyData(dataArray2);
+            
+            for (let i = 0; i < bufferLength2; i++) {
+                averageSpectrum2[i] += dataArray2[i];
+                if (dataArray2[i] > peakSpectrum2[i]) {
+                    peakSpectrum2[i] = dataArray2[i];
+                }
+            }
+            spectrumCount2++;
+
+            drawFFT(2);
+            updateStats(2);
+        }
+    }
+
+    function drawFFT(fileNum) {
+        const canvas = fileNum === 1 ? fftCanvas1 : fftCanvas2;
+        const ctx = fileNum === 1 ? fftCtx1 : fftCtx2;
+        const dataArray = fileNum === 1 ? dataArray1 : dataArray2;
+        const width = canvas.width;
+        const height = canvas.height;
+        const nyquist = audioContext.sampleRate / 2;
+
+        ctx.fillStyle = 'rgb(20, 20, 40)';
+        ctx.fillRect(0, 0, width, height);
+
+        drawGrid(ctx, width, height, nyquist);
+        drawSpectrum(ctx, dataArray, width, height, 'rgba(34, 197, 94, 0.7)', 'rgb(34, 197, 94)');
+
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 16px sans-serif';
+        ctx.fillText('Real-time FFT Spectrum (20Hz-20kHz, Log Scale)', 10, 25);
+    }
+
+    function drawAverageSpectrum(fileNum) {
+        const canvas = fileNum === 1 ? avgCanvas1 : avgCanvas2;
+        const ctx = fileNum === 1 ? avgCtx1 : avgCtx2;
+        const averageSpectrum = fileNum === 1 ? averageSpectrum1 : averageSpectrum2;
+        const spectrumCount = fileNum === 1 ? spectrumCount1 : spectrumCount2;
+        const bufferLength = fileNum === 1 ? bufferLength1 : bufferLength2;
+
+        if (spectrumCount === 0) return;
+
+        const width = canvas.width;
+        const height = canvas.height;
+        const nyquist = audioContext.sampleRate / 2;
+
+        ctx.fillStyle = 'rgb(20, 20, 40)';
+        ctx.fillRect(0, 0, width, height);
+
+        drawGrid(ctx, width, height, nyquist);
+
+        const avgData = new Float32Array(bufferLength);
+        for (let i = 0; i < bufferLength; i++) {
+            avgData[i] = averageSpectrum[i] / spectrumCount;
+        }
+        drawSpectrum(ctx, avgData, width, height, 'rgba(34, 197, 94, 0.7)', 'rgb(34, 197, 94)');
+
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 16px sans-serif';
+        ctx.fillText('Average Power Spectrum (20Hz-20kHz, Log Scale)', 10, 25);
+    }
+
+    function drawPeakSpectrum(fileNum) {
+        const canvas = fileNum === 1 ? peakCanvas1 : peakCanvas2;
+        const ctx = fileNum === 1 ? peakCtx1 : peakCtx2;
+        const peakSpectrum = fileNum === 1 ? peakSpectrum1 : peakSpectrum2;
+        const spectrumCount = fileNum === 1 ? spectrumCount1 : spectrumCount2;
+
+        if (spectrumCount === 0) return;
+
+        const width = canvas.width;
+        const height = canvas.height;
+        const nyquist = audioContext.sampleRate / 2;
+
+        ctx.fillStyle = 'rgb(20, 20, 40)';
+        ctx.fillRect(0, 0, width, height);
+
+        drawGrid(ctx, width, height, nyquist);
+        drawSpectrum(ctx, peakSpectrum, width, height, 'rgba(34, 197, 94, 0.7)', 'rgb(34, 197, 94)');
+
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 16px sans-serif';
+        ctx.fillText('Peak Hold Spectrum (20Hz-20kHz, Log Scale)', 10, 25);
+    }
+
+    function freqToLogX(freq, width) {
+        // Logarithmic scale: 20Hz to 20kHz
+        const minFreq = 20;
+        const maxFreq = 20000;
+        if (freq < minFreq) freq = minFreq;
+        if (freq > maxFreq) freq = maxFreq;
+        return (Math.log10(freq) - Math.log10(minFreq)) / (Math.log10(maxFreq) - Math.log10(minFreq)) * width;
+    }
+
+    function drawGrid(ctx, width, height, nyquist) {
+        ctx.strokeStyle = 'rgba(100, 100, 150, 0.3)';
+        ctx.lineWidth = 1;
+        
+        // Horizontal grid lines with dB labels
+        for (let i = 0; i <= 10; i++) {
+            const y = (height / 10) * i;
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(width, y);
+            ctx.stroke();
+            
+            const db = -60 + (6 * (10 - i));
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+            ctx.font = '11px sans-serif';
+            ctx.fillText(`${db} dB`, 5, y - 3);
+        }
+
+        // Vertical grid lines with frequency labels (logarithmic scale)
+        const freqSteps = [20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000];
+        ctx.fillStyle = 'white';
+        ctx.font = '12px sans-serif';
+        
+        freqSteps.forEach(freq => {
+            const x = freqToLogX(freq, width);
+            ctx.strokeStyle = 'rgba(100, 100, 150, 0.3)';
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, height);
+            ctx.stroke();
+            
+            const label = freq >= 1000 ? `${freq/1000}k` : freq;
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.fillText(label, x + 3, height - 5);
+        });
+    }
+
+    function drawSpectrum(ctx, data, width, height, fillColor, strokeColor) {
+        const minFreq = 20;
+        const maxFreq = 20000;
+        const nyquist = audioContext.sampleRate / 2;
+        
+        ctx.fillStyle = fillColor;
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+
+        let firstPoint = true;
+        
+        // Draw spectrum using logarithmic frequency scale
+        for (let i = 0; i < data.length; i++) {
+            const freq = (i / data.length) * nyquist;
+            if (freq < minFreq || freq > maxFreq) continue;
+            
+            const x = freqToLogX(freq, width);
+            const barHeight = (data[i] / 255) * height;
+            
+            if (firstPoint) {
+                ctx.moveTo(x, height - barHeight);
+                firstPoint = false;
             } else {
-                const randomIdx = Math.floor(Math.random() * possible.length);
-                state.currentWordIdx = possible[randomIdx];
+                ctx.lineTo(x, height - barHeight);
             }
         }
 
-        wordLabel.textContent = allWords[state.currentWordIdx].word;
-        infoLabel.textContent = '';
+        ctx.stroke();
+
+        // Fill area under curve
+        const lastX = freqToLogX(maxFreq, width);
+        ctx.lineTo(lastX, height);
+        ctx.lineTo(0, height);
+        ctx.closePath();
+        ctx.fill();
     }
 
-    function revealInfo() {
-        const word = allWords[state.currentWordIdx];
-        const infoLabel = document.getElementById('infoLabel');
-        infoLabel.textContent = `Meaning: ${word.meaning}\nExample: ${word.example}`;
-    }
-
-    function markWrong() {
-        if (!state.wrongWords.includes(state.currentWordIdx)) {
-            state.wrongWords.push(state.currentWordIdx);
-        }
-        revealInfo();
-        saveProgress();
-    }
-
-    function markCorrect() {
-        if (!state.correctWords.includes(state.currentWordIdx)) {
-            state.correctWords.push(state.currentWordIdx);
-        }
-
-        const wrongIdx = state.wrongWords.indexOf(state.currentWordIdx);
-        if (wrongIdx !== -1) {
-            state.wrongWords.splice(wrongIdx, 1);
-        }
-
-        revealInfo();
-        saveProgress();
-    }
-
-    function resetCorrectWords() {
-        state.remainingIdx = Array.from(new Set([...state.remainingIdx, ...state.correctWords]));
-        state.correctWords = [];
-        state.xOnlyMode = false;
-        saveProgress();
-        showNextWord();
-    }
-
-    function switchPanel(panelName, xOnlyMode = false) {
-        const panels = ['homePanel', 'quizPanel', 'importPanel'];
-        panels.forEach(p => {
-            document.getElementById(p).classList.remove('active');
-        });
-
-        if (panelName === 'quiz') {
-            document.getElementById('quizPanel').classList.add('active');
-            state.xOnlyMode = xOnlyMode;
-            showNextWord();
-        } else if (panelName === 'import') {
-            const importPanel = document.getElementById('importPanel');
-            importPanel.classList.add('active');
-            importPanel.scrollTop = 0;
-            document.getElementById('fileInput').value = '';
-            document.getElementById('fileName').textContent = '';
-            document.getElementById('sheetSelector').style.display = 'none';
-            document.getElementById('rangeSelector').classList.remove('visible');
-            document.getElementById('importBtn').style.display = 'none';
-            document.getElementById('importStatus').textContent = '';
+    function updateStats(fileNum) {
+        const dataArray = fileNum === 1 ? dataArray1 : dataArray2;
+        const stats = calculateStats(dataArray);
+        
+        if (fileNum === 1) {
+            peakFreq1.textContent = `${Math.round(stats.peakFreq)} Hz`;
+            avgAmp1.textContent = `${stats.avgDb.toFixed(1)} dB`;
         } else {
-            document.getElementById('homePanel').classList.add('active');
+            peakFreq2.textContent = `${Math.round(stats.peakFreq)} Hz`;
+            avgAmp2.textContent = `${stats.avgDb.toFixed(1)} dB`;
         }
     }
 
-    document.querySelector('.upload-button').addEventListener('click', () => {
-        document.getElementById('fileInput').click();
-    });
+    function calculateStats(dataArray) {
+        let maxIndex = 0;
+        let maxValue = 0;
+        let sum = 0;
 
-    document.getElementById('btnStart').addEventListener('click', () => switchPanel('quiz', false));
-    document.getElementById('btnReset').addEventListener('click', resetCorrectWords);
-    document.getElementById('btnXOnly').addEventListener('click', () => switchPanel('quiz', true));
-    document.getElementById('btnImport').addEventListener('click', () => switchPanel('import'));
-    document.getElementById('btnNext').addEventListener('click', showNextWord);
-    document.getElementById('btnCorrect').addEventListener('click', markCorrect);
-    document.getElementById('btnWrong').addEventListener('click', markWrong);
-    document.getElementById('btnHome').addEventListener('click', () => switchPanel('home'));
-    document.getElementById('backBtn').addEventListener('click', () => switchPanel('home'));
+        for (let i = 0; i < dataArray.length; i++) {
+            if (dataArray[i] > maxValue) {
+                maxValue = dataArray[i];
+                maxIndex = i;
+            }
+            sum += dataArray[i];
+        }
 
-    loadVocabulary();
-    loadProgress();
+        const nyquist = audioContext.sampleRate / 2;
+        const peakFreq = (maxIndex / dataArray.length) * nyquist;
+        const avg = sum / dataArray.length;
+        const avgDb = 20 * Math.log10(Math.max(avg / 255, 0.001));
+
+        return { peakFreq, avgDb };
+    }
+
+    function updateTimeDisplay(fileNum) {
+        if (fileNum === 1) {
+            if (!audioElement1 || isSeeking1) return;
+            currentTime1.textContent = formatTime(audioElement1.currentTime);
+            seekBar1.value = audioElement1.currentTime;
+        } else {
+            if (!audioElement2 || isSeeking2) return;
+            currentTime2.textContent = formatTime(audioElement2.currentTime);
+            seekBar2.value = audioElement2.currentTime;
+        }
+    }
+
+    function formatTime(seconds) {
+        if (isNaN(seconds)) return '0:00';
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    function downloadImage(canvas, filename) {
+        const link = document.createElement('a');
+        link.download = filename;
+        link.href = canvas.toDataURL();
+        link.click();
+    }
 </script>
+```
 
 </body>
 </html>
